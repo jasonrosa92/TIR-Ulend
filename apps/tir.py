@@ -24,30 +24,30 @@ def sorting_dates_installments():
     
     
 def data(investments, installments):
-    date = []
+    day = []
     values = []
     
     for investment in investments:
-        date.append(investment['created_at'])
+        day.append(investment['created_at'])
         amount = investment['amount'].replace('.', '')
         values.append(-int(amount))        
     
     for installment in installments:
-        date.append(input['created_at'])
+        day.append(input['created_at'])
         amount = installment['amount'].replace('.', '')
         values.append(amount)        
 
     dictionary_info = {
-        'date' : date,
+        'day' : day,
         'values' : values
     }
     return dictionary_info
 
 def process_data_frame(dictionary_info):
     df = pd.DataFrame(dictionary_info)
-    df ['date'] = pd.to_datetime(df['date'])
-    full_dates = pd.date_range(df['date'].min(), df['date'].max(), freq='d')
-    df_index = pd.DataFrame({'date': full_dates})
+    df ['day'] = pd.to_datetime(df['day'])
+    full_dates = pd.date_range(df['day'].min(), df['day'].max(), freq='d')
+    df_index = pd.DataFrame({'day': full_dates})
     df_index = df_index.merge(df, on='date', how='left').fillna(0)
     df_index = df_index.groupby('date').sum().reset_index()
     df_index['full'] = df_index['amount'].cumsum()
