@@ -1,62 +1,69 @@
-from datetime import datetime
-
 import streamlit as st
 import pandas as pd
-import numpy as np
+import numpy as npf
 
 from apps.investments import investments
-# from installments import installments
+from apps.installments import installments
 
-cashflow = {}
 
 titles = {
     'TIR': "Taxa Interna de Retorno"
 }
 
-def sorting_dates(inverted_order):
-    """
-    Function responsible for sorting cash flow dates
-    """
+def sorting_dates_investments():    
+    df = pd.DataFrame(investments)
+    df ['created_at'] = pd.to_datetime(df['created_at'])
+    df_ordenado = df.sort_values(by='created_at')
+    return df_ordenado
+
+def sorting_dates_installments():
+    df = pd.DataFrame(installments)
+    df ['due_date'] = pd.to_datetime(df['due_date'])
+    df_ordenado = df.sort_values(by='due_date')  
+    return df_ordenado
     
-    #initial_date
-    start_date = min(cashflow, key=lambda x: datetime.strptime(x, "%Y-%m-%d"))
-    #final_date
-    end_date = max(cashflow, key=lambda x: datetime.strptime(x, "%Y-%m-%d"))
-
-    if inverted_order:
-        io = pd.date_range(start=start_date, end=end_date)[::-1]
-    else:
-        io = pd.date_range(start=start_date, end=end_date)
-
-    result = {}
-    for value in io:
-        result[value.strftime("%Y-%m-%d")] = 0.0
-
-    for key, value in cashflow.items():
-        result[key] = value
-
-    return result
-
-def append_values(data):
-    """
-    Function responsible for adding up the values of the same date
-    """
     
-    for value in data:
-        try:
-            cashflow[value['due_date']]
+def data(investments, installments):
+    date = []
+    values = []
     
+    for investment in investments:
+        date.append(investment['created_at'])
+        amount = investment['amount'].replace('.', '')
+        values.append(-int(amount))        
+    
+    for installment in installments:
+        date.append(input['created_at'])
+        amount = installment['amount'].replace('.', '')
+        values.append(amount)        
 
+    dictionary_info = {
+        'date' : date,
+        'values' : values
+    }
+    return dictionary_info
+
+def process_data_frame(dictionary_info):
+    df = pd.DataFrame(dictionary_info)
+    df ['date'] = pd.to_datetime(df['date'])
+    full_dates = pd.date_range(df['date'].min(), df['date'].max(), freq='d')
+    df_index = pd.DataFrame({'date': full_dates})
+    df_index = df_index.merge(df, on='date', how='left').fillna(0)
+    df_index = df_index.groupby('date').sum().reset_index()
+    df_index['full'] = df_index['amount'].cumsum()
+    return df_index
+
+def TIR(df):
+    irr = round(100 * npf.irr(df['amount']), 2)
+    print(f"TIR: {irr}%")
+    
 def app():
-    st.title("Cálculo Taxa Interna de Retorno")
-    project1_cf = pd.DataFrame({"Year":np.arange(0,6),
-        "cf": [-800,200,250,300,350,400]})
-    project2_cf = pd.DataFrame({"Year":np.arange(0,6),
-        "cf": [-500,150,170,178,250,300]})
-    st.write(project1_cf)
-    irr1 = np.irr(project1_cf["cf"])
-    irr2 = np.irr(project2_cf["cf"])
-    irr_df = pd.DataFrame({"Name":["Project1", "Project2"],
-                      "IRR":[irr1, irr2]})    
-    st.write(irr_df)
+    st.title("Cálculo Taxa Interna de Retorno")    
+    df_investments = pd.DataFrame(sorting_dates_investments())
+    df_installments = pd.DataFrame(sorting_dates_installments())
+    st.write(df_investments, df_installments)
     
+    dictionary_info = data(investments, installments)
+    df_irr = process_data_frame(dictionary_info)    
+    df_irr(TIR)
+        
